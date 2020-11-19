@@ -1,4 +1,4 @@
-use std::alloc::{alloc, Layout};
+use std::alloc::{dealloc, alloc, Layout};
 use std::io::{Read, Write, Result};
 use std::mem::{size_of, align_of};
 use std::ptr;
@@ -119,6 +119,18 @@ impl Write for HorridRing<u8> {
     }
 }
 
+// -----------------------------------------------------------------------------
+//     - Drop impl -
+// -----------------------------------------------------------------------------
+
+impl<T> Drop for HorridRing<T> {
+    fn drop(&mut self) {
+        unsafe {
+            let layout = Layout::from_size_align(self.capacity * size_of::<T>(), align_of::<T>()) .expect("could not layout");
+            dealloc(self.inner.cast::<u8>(), layout);
+        }
+    }
+}
 
 #[cfg(test)]
 mod test {
